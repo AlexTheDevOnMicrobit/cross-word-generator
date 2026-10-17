@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crossword & Word Search Generator</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <header class="sidebar-header">
+        <h1>🧩 Puzzle Craft</h1>
+        <p>Crossword & Mots Mêlés Generator</p>
+      </header>
+
+      <nav class="tabs">
+        <button class="tab-btn active" data-tab="tab-input">1. Words & Clues</button>
+        <button class="tab-btn" data-tab="tab-settings">2. Puzzle Settings</button>
+        <button class="tab-btn" data-tab="tab-style">3. Style & Layout</button>
+      </nav>
+
+      <main class="tab-content">
+        <!-- Tab 1: Input -->
+        <section id="tab-input" class="tab-pane active">
+          <div class="form-group">
+            <label for="puzzle-type">Puzzle Mode:</label>
+            <select id="puzzle-type">
+              <option value="crossword">Crossword Puzzle</option>
+              <option value="wordsearch">Word Search (Mots Mêlés)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="file-upload">Import File (.txt, .csv, .md, .json):</label>
+            <input type="file" id="file-upload" accept=".txt,.csv,.md,.json">
+          </div>
+
+          <div class="form-group">
+            <label for="vocab-input">Vocabulary List:</label>
+            <span class="help-text">Format per line: <code>WORD: Clue</code> or <code>WORD, Clue</code></span>
+            <textarea id="vocab-input" rows="12" placeholder="FALL: Season following summer&#10;OWL: Known for hooting calls&#10;PUMPKIN: Large orange vegetable&#10;MAPLE: Type of autumn tree"></textarea>
+          </div>
+
+          <div class="button-group">
+            <button id="btn-sample" class="btn secondary">Load Sample Data</button>
+            <button id="btn-generate" class="btn primary">Generate Puzzle</button>
+          </div>
+        </section>
+
+        <!-- Tab 2: Settings -->
+        <section id="tab-settings" class="tab-pane">
+          <h3>Grid Options</h3>
+
+          <div id="crossword-options">
+            <div class="form-group">
+              <label for="grid-size-mode">Grid Size Mode:</label>
+              <select id="grid-size-mode">
+                <option value="auto">Auto Fit (Tightest Box)</option>
+                <option value="fixed">Fixed Grid Size</option>
+              </select>
+            </div>
+            <div class="form-group grid-size-inputs hidden">
+              <label for="grid-cols">Max Columns:</label>
+              <input type="number" id="grid-cols" value="20" min="5" max="50">
+              <label for="grid-rows">Max Rows:</label>
+              <input type="number" id="grid-rows" value="20" min="5" max="50">
+            </div>
+            <div class="form-group">
+              <label for="max-retries">Placement Optimization Iterations:</label>
+              <input type="number" id="max-retries" value="50" min="10" max="200">
+            </div>
+          </div>
+
+          <div id="wordsearch-options" class="hidden">
+            <div class="form-group">
+              <label for="ws-cols">Grid Width (Columns):</label>
+              <input type="number" id="ws-cols" value="15" min="8" max="30">
+            </div>
+            <div class="form-group">
+              <label for="ws-rows">Grid Height (Rows):</label>
+              <input type="number" id="ws-rows" value="15" min="8" max="30">
+            </div>
+            <fieldset class="form-fieldset">
+              <legend>Allowed Word Directions</legend>
+              <label><input type="checkbox" id="dir-E" checked> Horizontal Left to Right (E)</label>
+              <label><input type="checkbox" id="dir-S" checked> Vertical Top to Bottom (S)</label>
+              <label><input type="checkbox" id="dir-SE" checked> Diagonal Down-Right (SE)</label>
+              <label><input type="checkbox" id="dir-NE" checked> Diagonal Up-Right (NE)</label>
+              <label><input type="checkbox" id="dir-W"> Horizontal Right to Left (W)</label>
+              <label><input type="checkbox" id="dir-N"> Vertical Bottom to Top (N)</label>
+              <label><input type="checkbox" id="dir-NW"> Diagonal Up-Left (NW)</label>
+              <label><input type="checkbox" id="dir-SW"> Diagonal Down-Left (SW)</label>
+            </fieldset>
+            <div class="form-group">
+              <label for="ws-fill-style">Random Fill Alphabet:</label>
+              <select id="ws-fill-style">
+                <option value="uppercase">A - Z Uppercase</option>
+                <option value="french">French Accents Included</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 3: Style & Layout -->
+        <section id="tab-style" class="tab-pane">
+          <h3>Worksheet Styling</h3>
+          <div class="form-group">
+            <label for="sheet-title">Worksheet Title:</label>
+            <input type="text" id="sheet-title" value="AUTUMN FUN">
+          </div>
+          <div class="form-group">
+            <label for="sheet-subtitle">Subtitle:</label>
+            <input type="text" id="sheet-subtitle" value="CROSSWORD PUZZLE">
+          </div>
+          <div class="form-group">
+            <label for="font-family">Font Family:</label>
+            <select id="font-family">
+              <option value="'Segoe UI', Arial, sans-serif">Modern Sans (Segoe / Arial)</option>
+              <option value="'Courier New', monospace">Classic Monospace</option>
+              <option value="'Georgia', serif">Serif (Georgia)</option>
+              <option value="'Comic Sans MS', 'Chalkboard SE', cursive">Fun / School (Comic / Casual)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="primary-color">Header & Accent Color:</label>
+            <input type="color" id="primary-color" value="#1a1a1a">
+          </div>
+          <div class="form-group">
+            <label for="cell-border-color">Grid Line Color:</label>
+            <input type="color" id="cell-border-color" value="#000000">
+          </div>
+          <div class="form-group">
+            <label for="clue-cols">Clue Column Layout:</label>
+            <select id="clue-cols">
+              <option value="2">2 Columns</option>
+              <option value="3">3 Columns</option>
+              <option value="1">1 Column</option>
+            </select>
+          </div>
+        </section>
+      </main>
+
+      <footer class="sidebar-footer">
+        <div class="export-actions">
+          <label>View Mode:</label>
+          <div class="toggle-switch">
+            <button id="view-blank" class="toggle-btn active">Blank Worksheet</button>
+            <button id="view-solution" class="toggle-btn">Answer Key</button>
+          </div>
+
+          <h3>Export Options</h3>
+          <button id="export-png" class="btn success">Export Image (PNG)</button>
+          <button id="export-svg" class="btn secondary">Export SVG</button>
+          <button id="export-pdf" class="btn secondary">Export PDF</button>
+          <button id="export-json" class="btn text">Save Project (JSON)</button>
+          <button id="import-json-btn" class="btn text">Load Project (JSON)</button>
+          <input type="file" id="import-json-file" accept=".json" class="hidden">
+        </div>
+      </footer>
+    </aside>
+
+    <main class="preview-area">
+      <div class="preview-header">
+        <span>Worksheet Preview</span>
+        <div id="unplaced-warning" class="warning-badge hidden"></div>
+      </div>
+      <div class="preview-viewport">
+        <div id="worksheet-paper" class="worksheet-paper">
+          <!-- Rendered worksheet SVG or Canvas container -->
+          <div id="sheet-render-target"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/parser.js"></script>
+  <script src="js/crossword.js"></script>
+  <script src="js/wordsearch.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
