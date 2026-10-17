@@ -62,17 +62,18 @@
   }
 
   /**
-   * Generates SVG string for the entire worksheet matching image.png visual style.
-   * @param {Object} puzzleData - Result from Crossword or WordSearch generator
-   * @param {Object} config - Page title, subtitle, font, colors, viewMode ('blank' | 'solution'), type ('crossword' | 'wordsearch'), clueCols
+   * Generates SVG string for the entire worksheet.
+   * @param {Object} puzzleData - Result from Crossword, WordSearch, or FillIn generator
+   * @param {Object} config - Page title, subtitle, font, colors, viewMode ('blank' | 'solution'), type ('crossword' | 'wordsearch' | 'fillin'), clueCols
    * @returns {string} SVG XML string
    */
   function renderWorksheetSVG(puzzleData, config = {}) {
     const title = config.title || 'PUZZLE WORKSHEET';
-    const subtitle = config.subtitle || (config.type === 'wordsearch' ? 'MOTS MÊLÉS / WORD SEARCH' : 'CROSSWORD PUZZLE');
+    const subtitle = config.subtitle || (config.type === 'wordsearch' ? 'MOTS MÊLÉS / WORD SEARCH' : (config.type === 'fillin' ? 'FILL-IN PUZZLE' : 'CROSSWORD PUZZLE'));
     const fontFamily = config.fontFamily || "'Segoe UI', Arial, sans-serif";
     const primaryColor = config.primaryColor || '#1a1a1a';
     const borderColor = config.borderColor || '#000000';
+    const paperBg = config.paperBg || '#ffffff';
     const isSolution = config.viewMode === 'solution';
     const puzzleType = config.type || 'crossword';
     const clueCols = parseInt(config.clueCols, 10) || 2;
@@ -85,7 +86,7 @@
     const margin = 40;
     const contentWidth = pageWidth - margin * 2;
 
-    let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${pageWidth} ${pageHeight}" width="${pageWidth}" height="${pageHeight}" style="background-color: white; font-family: ${fontFamily};">`;
+    let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${pageWidth} ${pageHeight}" width="${pageWidth}" height="${pageHeight}" style="background-color: ${paperBg}; font-family: ${fontFamily};">`;
 
     if (customFontFaceCSS) {
       svgContent += `<defs><style>${customFontFaceCSS}</style></defs>`;
@@ -105,7 +106,7 @@
     const maxGridHeight = 520;
     const maxGridWidth = contentWidth;
 
-    if (puzzleType === 'crossword') {
+    if (puzzleType === 'crossword' || puzzleType === 'fillin') {
       const grid = puzzleData.grid || [];
       const numRows = grid.length;
       const numCols = numRows > 0 ? grid[0].length : 0;
@@ -116,7 +117,7 @@
         const gridPixelHeight = numRows * cellSize;
         const gridLeft = Math.floor((pageWidth - gridPixelWidth) / 2);
 
-        svgContent += `<g id="crossword-grid" transform="translate(${gridLeft}, ${gridTop})">`;
+        svgContent += `<g id="grid-container" transform="translate(${gridLeft}, ${gridTop})">`;
 
         for (let r = 0; r < numRows; r++) {
           for (let c = 0; c < numCols; c++) {
@@ -125,11 +126,11 @@
               const x = c * cellSize;
               const y = r * cellSize;
 
-              // White cell box with black border
+              // White cell box with border
               svgContent += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="#ffffff" stroke="${borderColor}" stroke-width="1.5" />`;
 
-              // Cell Number (if any)
-              if (cell.number > 0) {
+              // Cell Number (Crossword only, omitted in Fill-In)
+              if (puzzleType === 'crossword' && cell.number > 0) {
                 const numFontSize = Math.max(8, Math.floor(cellSize * 0.3));
                 svgContent += `<text x="${x + 3}" y="${y + numFontSize + 1}" font-size="${numFontSize}" font-weight="bold" fill="#000000">${cell.number}</text>`;
               }
@@ -145,9 +146,13 @@
 
         svgContent += `</g>`;
 
-        // 3. Crossword Clues Section (ACROSS & DOWN)
-        const cluesTop = gridTop + gridPixelHeight + 35;
-        svgContent += renderCrosswordClues(puzzleData.placedWords, cluesTop, pageWidth, pageHeight, margin, primaryColor, clueCols, isSolution, clueFontSize);
+        // 3. Clues or Grouped Word Lists
+        const listTop = gridTop + gridPixelHeight + 35;
+        if (puzzleType === 'fillin') {
+          svgContent += renderFillInWordList(puzzleData.groupedByLength, listTop, pageWidth, pageHeight, margin, primaryColor, clueCols, clueFontSize);
+        } else {
+          svgContent += renderCrosswordClues(puzzleData.placedWords, listTop, pageWidth, pageHeight, margin, primaryColor, clueCols, isSolution, clueFontSize);
+        }
       }
     } else {
       // Word Search (Mots Mêlés) Rendering
@@ -245,6 +250,56 @@
       yOffset += wrapped.height + 4;
     }
     html += `</g>`;
+
+    html += `</g>`;
+    return html;
+  }
+
+  function renderFillInWordList(groupedByLength, startY, pageWidth, pageHeight, margin, primaryColor, numCols, fontSize = 12) {
+    if (!groupedByLength || Object.keys(groupedByLength).length === 0) return '';
+
+    let html = `<g id="fillin-words" transform="translate(${margin}, ${startY})">`;
+    html += `<text x="0" y="0" font-size="18" font-weight="bold" fill="${primaryColor}" letter-spacing="1">FILL IN WORDS</text>`;
+    html += `<line x1="0" y1="8" x2="${pageWidth - margin * 2}" y2="8" stroke="${primaryColor}" stroke-width="1.5" />`;
+
+    const cols = Math.max(1, Math.min(numCols || 3, 4));
+    const availableWidth = pageWidth - margin * 2;
+    const colWidth = availableWidth / cols;
+
+    const lengths = Object.keys(groupedByLength).map(Number).sort((a, b) => a - b);
+    const colYOffsets = new Array(cols).fill(30);
+    let col = 0;
+
+    for (const len of lengths) {
+      const words = groupedByLength[len];
+      if (!words || words.length === 0) continue;
+
+      const groupHeader = `${len} LETTERS`;
+      let currentY = colYOffsets[col];
+
+      if (startY + currentY > pageHeight - 40) {
+        col = (col + 1) % cols;
+        currentY = colYOffsets[col];
+      }
+
+      // Group Header
+      html += `<text x="${col * colWidth}" y="${currentY}" font-size="${fontSize + 2}" font-weight="bold" fill="${primaryColor}">${escapeXML(groupHeader)}</text>`;
+      currentY += fontSize + 8;
+
+      for (const word of words) {
+        if (startY + currentY > pageHeight - 35) {
+          col = (col + 1) % cols;
+          currentY = colYOffsets[col];
+        }
+
+        html += `<text x="${col * colWidth + 5}" y="${currentY}" font-size="${fontSize}" font-weight="600" fill="#334155">• ${escapeXML(word)}</text>`;
+        currentY += fontSize + 6;
+      }
+
+      currentY += 10;
+      colYOffsets[col] = currentY;
+      col = (col + 1) % cols;
+    }
 
     html += `</g>`;
     return html;

@@ -1,4 +1,4 @@
-# Puzzle Craft - Crossword & Word Search Generator (v1.1.0)
+# Puzzle Craft - Crossword & Word Search Generator (v1.2.0)
 
 A web-based generator for creating printable **Crosswords** and **Word Searches ("Mots Mêlés")** from custom vocabulary lists. Designed for educators, content creators, and puzzle enthusiasts.
 
@@ -6,8 +6,9 @@ A web-based generator for creating printable **Crosswords** and **Word Searches 
 
 ## Features
 
-- **Dual Puzzle Modes:**
+- **Triple Puzzle Modes:**
   - **Crossword Engine:** Automatic intersection grid placement with random-restart layout optimization and Across/Down numbering.
+  - **Fill-In Puzzle Engine:** Intersecting grid without clue numbers, displaying placed words organized neatly into letter-length groups (e.g. 3 Letters, 4 Letters, 5 Letters).
   - **Word Search ("Mots Mêlés"):** 8-directional word placement with custom filler alphabets (Standard English A–Z or French accented characters).
 
 - **Multi-Format Vocabulary Import:**
@@ -18,6 +19,7 @@ A web-based generator for creating printable **Crosswords** and **Word Searches 
 - **Worksheet Styling & Customization:**
   - Custom title and subtitle headers.
   - Custom font selection & **Custom Font File Upload** (`.ttf`, `.otf`, `.woff`, `.woff2`).
+  - **Worksheet Paper Theme Selector:** Classic Crisp White, Warm Vintage Parchment, and Cool Blue Slate.
   - Adjustable clue font size slider (8px - 18px).
   - Configurable grid line and accent colors.
   - Multi-column clue layouts (1, 2, 3, or 4 columns).
@@ -27,11 +29,14 @@ A web-based generator for creating printable **Crosswords** and **Word Searches 
   - **Multi-language selector:** English (EN) & French (FR).
   - **Accent Support:** Preserves accented characters (`Â`, `Ä`, `É`, `È`, `Ê`, `Ë`, `Î`, `Ï`, `Ô`, `Ö`, `Ù`, `Û`, `Ü`, `Ç`, `Ñ`, etc.) in grid placement and clues.
   - Live **Word & Clue Counter** badge.
-  - One-click **Copy AI Prompt** and **Clear Text** buttons.
+  - Interactive **AI Instructions Dropdown Menu** for prompt copying and markdown file downloading.
+  - **Shuffle Grid Button** for quick layout reshuffling.
+  - Live **Word Length Breakdown Stats** (pill badges showing 3L, 4L, 5L counts).
+  - One-click **Clear Text** button.
   - Interactive **Preview Canvas Zoom** (Zoom In / Out / Reset Fit).
   - Direct **Print Worksheet** functionality.
   - One-click **Reset Settings to Default**.
-  - Project JSON export/import with versioning (`"version": "1.1.0"`).
+  - Project JSON export/import with versioning (`"version": "1.2.0"`).
 
 - **Export & View Modes:**
   - Real-time toggle between **Blank Worksheet** and **Answer Key** modes.

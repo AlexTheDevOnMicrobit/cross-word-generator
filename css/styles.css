@@ -82,6 +82,22 @@ body {
   font-weight: 600;
 }
 
+.stats-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0 8px 0;
+}
+
+.stat-pill {
+  font-size: 0.7rem;
+  background-color: #334155;
+  color: #cbd5e1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
 .textarea-actions {
   display: flex;
   justify-content: flex-end;
@@ -272,6 +288,43 @@ body {
 .button-group {
   display: flex;
   gap: 10px;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+  flex: 1;
+}
+
+.dropdown-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background-color: var(--bg-sidebar);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  width: 220px;
+  margin-bottom: 6px;
+  padding: 4px 0;
+}
+
+.dropdown-item {
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: var(--text-light);
+  text-align: left;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: var(--primary);
+  color: white;
 }
 
 .btn {

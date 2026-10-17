@@ -35,6 +35,7 @@
             <label for="puzzle-type">Puzzle Mode:</label>
             <select id="puzzle-type">
               <option value="crossword">Crossword Puzzle</option>
+              <option value="fillin">Fill-In Puzzle</option>
               <option value="wordsearch">Word Search (Mots Mêlés)</option>
             </select>
           </div>
@@ -49,16 +50,23 @@
               <label for="vocab-input">Vocabulary List:</label>
               <span id="vocab-counter" class="badge-count">0 words</span>
             </div>
+            <div id="word-stats" class="stats-badge-list"></div>
             <span class="help-text">Format per line: <code>WORD: Clue</code> or <code>WORD, Clue</code></span>
             <textarea id="vocab-input" rows="10" placeholder="FALL: Season following summer&#10;OWL: Known for hooting calls&#10;PUMPKIN: Large orange vegetable&#10;MAPLE: Type of autumn tree"></textarea>
             <div class="textarea-actions">
               <button id="btn-clear-text" class="btn-xs danger">Clear Text</button>
-              <button id="btn-copy-ai" class="btn-xs secondary">Copy AI Prompt</button>
             </div>
           </div>
 
           <div class="button-group">
-            <button id="btn-ai-instructions" class="btn secondary">AI Instructions</button>
+            <div class="dropdown">
+              <button id="btn-ai-instructions" class="btn secondary dropdown-toggle">AI Instructions ▼</button>
+              <div id="ai-dropdown-menu" class="dropdown-menu hidden">
+                <button id="btn-copy-ai-item" class="dropdown-item">Copy AI Prompt</button>
+                <button id="btn-download-ai" class="dropdown-item">Download AI Instructions (.md)</button>
+              </div>
+            </div>
+            <button id="btn-shuffle" class="btn secondary" title="Reshuffle layout">Shuffle Grid</button>
             <button id="btn-generate" class="btn primary">Generate Puzzle</button>
           </div>
         </section>
@@ -151,6 +159,14 @@
             <input type="color" id="cell-border-color" value="#000000">
           </div>
           <div class="form-group">
+            <label for="paper-theme">Worksheet Paper Theme:</label>
+            <select id="paper-theme">
+              <option value="#ffffff">Classic Crisp White</option>
+              <option value="#fbf8ef">Warm Vintage Parchment</option>
+              <option value="#f1f5f9">Cool Blue Slate</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label for="clue-font-size">Clue Font Size (px):</label>
             <div class="range-with-val">
               <input type="range" id="clue-font-size" min="8" max="18" value="12" step="1">
@@ -213,6 +229,7 @@
   <script src="js/i18n.js"></script>
   <script src="js/parser.js"></script>
   <script src="js/crossword.js"></script>
+  <script src="js/fillin.js"></script>
   <script src="js/wordsearch.js"></script>
   <script src="js/renderer.js"></script>
   <script src="js/export.js"></script>
