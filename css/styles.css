@@ -139,6 +139,12 @@ body {
   font-family: monospace;
 }
 
+.form-group textarea::placeholder {
+  color: rgba(148, 163, 184, 0.45);
+  font-style: italic;
+  font-family: monospace;
+}
+
 .form-group input[type="color"] {
   height: 38px;
   padding: 2px 4px;

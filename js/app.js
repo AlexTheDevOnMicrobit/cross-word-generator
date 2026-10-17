@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const wordsearchOptions = document.getElementById('wordsearch-options');
   const vocabInput = document.getElementById('vocab-input');
   const fileUpload = document.getElementById('file-upload');
-  const btnSample = document.getElementById('btn-sample');
+  const btnAiInstructions = document.getElementById('btn-ai-instructions');
   const btnGenerate = document.getElementById('btn-generate');
   const viewBlankBtn = document.getElementById('view-blank');
   const viewSolutionBtn = document.getElementById('view-solution');
@@ -64,27 +64,47 @@ document.addEventListener('DOMContentLoaded', function () {
     generateAndRender();
   });
 
-  // Load Sample Vocabulary Data
-  btnSample.addEventListener('click', () => {
-    vocabInput.value = `FALL: Season following summer
-OWL: Known for its hooting calls
-CINNAMON: A popular fall spice
-SHADE: Foliage shelter
-BAT: Nocturnal flier
-RAIN: Provides hydration to crops
-HOT CHOCOLATE: A cocoa-based drink
-TEA: Iced or hot drink
-OVERCAST: Meteorological term for heavy cloud cover
-SQUIRREL: Small mammal known for storing food in trees
-FROST: Can damage plants as temperatures plummet
-FLANNEL: Often seen on shirts during colder months
-SEPTEMBER: The month fall begins
-SWEATER: Pullover or cardigan
-LEAVES: They cover the ground in a blanket of red and yellow
-ACORN: Chipmunk's treasure
-COOL: Pleasantly chilly fall weather
-SOUP: Comfort food in a bowl`;
-    generateAndRender();
+  // Download AI Prompt Instructions
+  btnAiInstructions.addEventListener('click', () => {
+    const aiInstructionsText = `# AI Prompt Instructions for Generating Puzzle Vocabulary Lists
+
+Copy and send the prompt template below to any AI model (such as ChatGPT, Claude, or Gemini) to automatically generate a vocabulary list perfectly formatted for Puzzle Craft.
+
+---
+
+## Copy & Paste AI Prompt Template
+
+Please generate a vocabulary list for a puzzle generator based on the topic: [INSERT YOUR TOPIC HERE, e.g., "French Beginners - Food & Dining" or "Biology - Cell Structure"].
+
+Strict Rules:
+1. Provide between 15 to 25 words with matching concise clues.
+2. Format each line strictly as:
+   WORD: Clue description
+3. Words should be in uppercase letters and contain no spaces or special characters (or use spaces if multi-word, accents are acceptable).
+4. Do NOT include markdown bolding, numbering, bullet points, or extra introductory text inside the list.
+
+Example Output Format:
+APPLE: A round red or green fruit grown on trees
+BREAD: A staple food prepared from a dough of flour and water
+CHEESE: A dairy product made from milk curds
+WATER: Essential clear fluid for human life
+
+---
+
+## Supported Formats in Puzzle Craft
+
+1. Colon Separated: WORD: Clue
+2. Comma / Dash Separated: WORD, Clue OR WORD - Clue
+3. Markdown Table: | Word | Clue |
+4. JSON Array: [{"word": "WORD", "clue": "Clue"}]
+`;
+    const blob = new Blob([aiInstructionsText], { type: 'text/markdown;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'AI_PROMPT_INSTRUCTIONS.md';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   });
 
   // Handle File Upload (.txt, .csv, .md, .json)
@@ -127,6 +147,15 @@ SOUP: Comfort food in a bowl`;
     input.addEventListener('input', renderCurrentWorksheet);
   });
 
+  vocabInput.addEventListener('input', () => {
+    if (vocabInput.value.trim() === '') {
+      currentPuzzleData = null;
+      currentSVGString = '';
+      sheetRenderTarget.innerHTML = '<div style="padding: 40px; text-align: center; color: #64748b;">Enter your vocabulary list above or upload a file to generate a preview.</div>';
+      unplacedWarning.classList.add('hidden');
+    }
+  });
+
   btnGenerate.addEventListener('click', generateAndRender);
 
   // Core Puzzle Generation & Rendering
@@ -167,7 +196,7 @@ SOUP: Comfort food in a bowl`;
     // Display warning for unplaced words
     if (currentPuzzleData.unplacedWords && currentPuzzleData.unplacedWords.length > 0) {
       const unplacedNames = currentPuzzleData.unplacedWords.map(w => w.word).join(', ');
-      unplacedWarning.textContent = `⚠️ Unplaced words (${currentPuzzleData.unplacedWords.length}): ${unplacedNames}`;
+      unplacedWarning.textContent = `Unplaced words (${currentPuzzleData.unplacedWords.length}): ${unplacedNames}`;
       unplacedWarning.classList.remove('hidden');
     } else {
       unplacedWarning.classList.add('hidden');
@@ -257,6 +286,6 @@ SOUP: Comfort food in a bowl`;
     reader.readAsText(file);
   });
 
-  // Initial auto-generation on load
-  btnSample.click();
+  // Leave input empty on page load so translucent placeholder is visible
+  sheetRenderTarget.innerHTML = '<div style="padding: 40px; text-align: center; color: #64748b;">Enter your vocabulary list above or upload a file to generate a preview.</div>';
 });
