@@ -4,17 +4,16 @@
 
 (function (exports) {
   /**
-   * Cleans and normalizes a word for grid placement (A-Z uppercase).
+   * Cleans and normalizes a word for grid placement while retaining uppercase accents.
+   * e.g., "élevé" -> "ÉLEVÉ", "môt-mêlé" -> "MÔTMÊLÉ"
    * @param {string} str
-   * @returns {string} Normalized uppercase string with non-letters removed
+   * @returns {string} Normalized uppercase string keeping unicode letters and accents
    */
   function normalizeWord(str) {
     if (!str) return '';
     return str
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // remove accents
       .toUpperCase()
-      .replace(/[^A-Z]/g, ''); // keep only A-Z
+      .replace(/[^\p{L}]/gu, ''); // Keep unicode letter characters including accents
   }
 
   /**

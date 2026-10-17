@@ -46,9 +46,110 @@ body {
   border-bottom: 1px solid var(--border-color);
 }
 
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .sidebar-header h1 {
   font-size: 1.5rem;
   color: #f1f5f9;
+}
+
+.lang-selector {
+  background-color: #0f172a;
+  color: var(--text-light);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.label-with-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.badge-count {
+  font-size: 0.75rem;
+  background-color: var(--primary);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.stats-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0 8px 0;
+}
+
+.stat-pill {
+  font-size: 0.7rem;
+  background-color: #334155;
+  color: #cbd5e1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.textarea-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.btn-xs {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-xs.danger {
+  background-color: #dc2626;
+  color: white;
+}
+
+.btn-xs.secondary {
+  background-color: #475569;
+  color: white;
+}
+
+.range-with-val {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.range-with-val input[type="range"] {
+  flex: 1;
+}
+
+.range-with-val span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  min-width: 40px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.preview-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
 }
 
 .sidebar-header p {
@@ -187,6 +288,43 @@ body {
 .button-group {
   display: flex;
   gap: 10px;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+  flex: 1;
+}
+
+.dropdown-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background-color: var(--bg-sidebar);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  width: 220px;
+  margin-bottom: 6px;
+  padding: 4px 0;
+}
+
+.dropdown-item {
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: var(--text-light);
+  text-align: left;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: var(--primary);
+  color: white;
 }
 
 .btn {
