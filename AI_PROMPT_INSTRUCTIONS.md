@@ -4,7 +4,7 @@ Copy and send the prompt template below to any AI model (such as ChatGPT, Claude
 
 ---
 
-## 📋 Copy & Paste AI Prompt Template
+## Copy & Paste AI Prompt Template
 
 ```text
 Please generate a vocabulary list for a puzzle generator based on the topic: [INSERT YOUR TOPIC HERE, e.g., "French Beginners - Food & Dining" or "Biology - Cell Structure"].
@@ -25,7 +25,7 @@ WATER: Essential clear fluid for human life
 
 ---
 
-## 🎯 Supported Formats in Puzzle Craft
+## Supported Formats in Puzzle Craft
 
 Puzzle Craft supports multiple file types and formats if you export or copy AI responses:
 
