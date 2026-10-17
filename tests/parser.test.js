@@ -2,8 +2,8 @@ const test = require('node:test');
 const assert = require('node:assert');
 const Parser = require('../js/parser.js');
 
-test('normalizeWord removes accents and non-alpha characters', () => {
-  assert.strictEqual(Parser.normalizeWord('Éléphant!'), 'ELEPHANT');
+test('normalizeWord removes non-letters while preserving uppercase accents', () => {
+  assert.strictEqual(Parser.normalizeWord('Éléphant!'), 'ÉLÉPHANT');
   assert.strictEqual(Parser.normalizeWord('Ice Cream'), 'ICECREAM');
   assert.strictEqual(Parser.normalizeWord('123-ABC'), 'ABC');
 });

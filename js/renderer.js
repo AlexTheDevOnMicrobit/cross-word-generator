@@ -13,30 +13,72 @@
       .replace(/'/g, '&apos;');
   }
 
-  function wrapTextSVG(str, maxWidth, fontSize) {
-    const rawStr = String(str);
-    if (rawStr.length * (fontSize * 0.55) > maxWidth) {
-      const maxChars = Math.floor(maxWidth / (fontSize * 0.55));
-      return escapeXML(rawStr.substring(0, Math.max(1, maxChars - 3)) + '...');
+  /**
+   * Multi-line text wrapping for SVG <text> element using <tspan> lines.
+   * Prevents text overflow between adjacent columns.
+   * @returns {Object} { svgString, height }
+   */
+  function wrapTextToLinesSVG(str, x, y, maxWidth, fontSize, lineHeight = 1.3, fill = '#1f2937', fontWeight = '400') {
+    const rawStr = String(str || '');
+    const words = rawStr.split(' ');
+    const lines = [];
+    let currentLine = '';
+
+    // Estimate character width based on font size (~0.55 * fontSize)
+    const charWidth = fontSize * 0.52;
+
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      if (testLine.length * charWidth > maxWidth && currentLine !== '') {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
     }
-    return escapeXML(rawStr);
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    if (lines.length === 0) lines.push('');
+
+    let tspanContent = '';
+    const stepY = fontSize * lineHeight;
+    for (let i = 0; i < lines.length; i++) {
+      const lineY = y + i * stepY;
+      const dyAttr = i === 0 ? '' : ` x="${x}" dy="${stepY}"`;
+      tspanContent += `<tspan x="${x}" ${i === 0 ? `y="${y}"` : `dy="${stepY}"`}>${escapeXML(lines[i])}</tspan>`;
+    }
+
+    const svg = `<text font-size="${fontSize}" font-weight="${fontWeight}" fill="${fill}">${tspanContent}</text>`;
+    const totalHeight = lines.length * stepY;
+
+    return {
+      svg,
+      linesCount: lines.length,
+      height: totalHeight
+    };
   }
 
   /**
-   * Generates SVG string for the entire worksheet matching image.png visual style.
-   * @param {Object} puzzleData - Result from Crossword or WordSearch generator
-   * @param {Object} config - Page title, subtitle, font, colors, viewMode ('blank' | 'solution'), type ('crossword' | 'wordsearch'), clueCols
+   * Generates SVG string for the entire worksheet.
+   * @param {Object} puzzleData - Result from Crossword, WordSearch, or FillIn generator
+   * @param {Object} config - Page title, subtitle, font, colors, viewMode ('blank' | 'solution'), type ('crossword' | 'wordsearch' | 'fillin'), clueCols
    * @returns {string} SVG XML string
    */
   function renderWorksheetSVG(puzzleData, config = {}) {
     const title = config.title || 'PUZZLE WORKSHEET';
-    const subtitle = config.subtitle || (config.type === 'wordsearch' ? 'MOTS MÊLÉS / WORD SEARCH' : 'CROSSWORD PUZZLE');
+    const subtitle = config.subtitle || (config.type === 'wordsearch' ? 'MOTS MÊLÉS / WORD SEARCH' : (config.type === 'fillin' ? 'FILL-IN PUZZLE' : 'CROSSWORD PUZZLE'));
     const fontFamily = config.fontFamily || "'Segoe UI', Arial, sans-serif";
     const primaryColor = config.primaryColor || '#1a1a1a';
     const borderColor = config.borderColor || '#000000';
+    const paperBg = config.paperBg || '#ffffff';
     const isSolution = config.viewMode === 'solution';
     const puzzleType = config.type || 'crossword';
     const clueCols = parseInt(config.clueCols, 10) || 2;
+    const clueFontSize = parseInt(config.clueFontSize, 10) || 12;
+    const customFontFaceCSS = config.customFontFaceCSS || '';
 
     // Standard high-resolution printable page size (A4 / Letter aspect ratio: 800 x 1100 px)
     const pageWidth = 800;
@@ -44,7 +86,11 @@
     const margin = 40;
     const contentWidth = pageWidth - margin * 2;
 
-    let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${pageWidth} ${pageHeight}" width="${pageWidth}" height="${pageHeight}" style="background-color: white; font-family: ${fontFamily};">`;
+    let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${pageWidth} ${pageHeight}" width="${pageWidth}" height="${pageHeight}" style="background-color: ${paperBg}; font-family: ${fontFamily};">`;
+
+    if (customFontFaceCSS) {
+      svgContent += `<defs><style>${customFontFaceCSS}</style></defs>`;
+    }
 
     // 1. Header Section
     svgContent += `
@@ -60,7 +106,7 @@
     const maxGridHeight = 520;
     const maxGridWidth = contentWidth;
 
-    if (puzzleType === 'crossword') {
+    if (puzzleType === 'crossword' || puzzleType === 'fillin') {
       const grid = puzzleData.grid || [];
       const numRows = grid.length;
       const numCols = numRows > 0 ? grid[0].length : 0;
@@ -71,7 +117,7 @@
         const gridPixelHeight = numRows * cellSize;
         const gridLeft = Math.floor((pageWidth - gridPixelWidth) / 2);
 
-        svgContent += `<g id="crossword-grid" transform="translate(${gridLeft}, ${gridTop})">`;
+        svgContent += `<g id="grid-container" transform="translate(${gridLeft}, ${gridTop})">`;
 
         for (let r = 0; r < numRows; r++) {
           for (let c = 0; c < numCols; c++) {
@@ -80,11 +126,11 @@
               const x = c * cellSize;
               const y = r * cellSize;
 
-              // White cell box with black border
+              // White cell box with border
               svgContent += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="#ffffff" stroke="${borderColor}" stroke-width="1.5" />`;
 
-              // Cell Number (if any)
-              if (cell.number > 0) {
+              // Cell Number (Crossword only, omitted in Fill-In)
+              if (puzzleType === 'crossword' && cell.number > 0) {
                 const numFontSize = Math.max(8, Math.floor(cellSize * 0.3));
                 svgContent += `<text x="${x + 3}" y="${y + numFontSize + 1}" font-size="${numFontSize}" font-weight="bold" fill="#000000">${cell.number}</text>`;
               }
@@ -100,9 +146,13 @@
 
         svgContent += `</g>`;
 
-        // 3. Crossword Clues Section (ACROSS & DOWN)
-        const cluesTop = gridTop + gridPixelHeight + 35;
-        svgContent += renderCrosswordClues(puzzleData.placedWords, cluesTop, pageWidth, pageHeight, margin, primaryColor, clueCols, isSolution);
+        // 3. Clues or Grouped Word Lists
+        const listTop = gridTop + gridPixelHeight + 35;
+        if (puzzleType === 'fillin') {
+          svgContent += renderFillInWordList(puzzleData.groupedByLength, listTop, pageWidth, pageHeight, margin, primaryColor, clueCols, clueFontSize);
+        } else {
+          svgContent += renderCrosswordClues(puzzleData.placedWords, listTop, pageWidth, pageHeight, margin, primaryColor, clueCols, isSolution, clueFontSize);
+        }
       }
     } else {
       // Word Search (Mots Mêlés) Rendering
@@ -149,7 +199,7 @@
 
         // 3. Word Search Vocabulary Word List
         const listTop = gridTop + gridPixelHeight + 35;
-        svgContent += renderWordSearchList(puzzleData.placedWords, listTop, pageWidth, pageHeight, margin, primaryColor, clueCols);
+        svgContent += renderWordSearchList(puzzleData.placedWords, listTop, pageWidth, pageHeight, margin, primaryColor, clueCols, clueFontSize);
       }
     }
 
@@ -160,7 +210,7 @@
     return svgContent;
   }
 
-  function renderCrosswordClues(placedWords, startY, pageWidth, pageHeight, margin, primaryColor, numCols, isSolution) {
+  function renderCrosswordClues(placedWords, startY, pageWidth, pageHeight, margin, primaryColor, numCols, isSolution, fontSize = 12) {
     if (!placedWords || placedWords.length === 0) return '';
 
     const acrossWords = placedWords.filter(w => w.direction === 'across').sort((a, b) => a.number - b.number);
@@ -172,30 +222,32 @@
     // Across Column
     html += `<g id="across-clues" transform="translate(0, 0)">`;
     html += `<text x="0" y="0" font-size="18" font-weight="bold" fill="${primaryColor}" letter-spacing="1">ACROSS</text>`;
-    html += `<line x1="0" y1="8" x2="${colWidth - 30}" y2="8" stroke="${primaryColor}" stroke-width="1.5" />`;
+    html += `<line x1="0" y1="8" x2="${colWidth - 25}" y2="8" stroke="${primaryColor}" stroke-width="1.5" />`;
 
     let yOffset = 28;
     for (const w of acrossWords) {
-      if (startY + yOffset > pageHeight - 40) break;
+      if (startY + yOffset > pageHeight - 35) break;
       const answerTag = isSolution ? ` (${w.displayWord || w.word})` : '';
       const clueText = `${w.number}. ${w.clue}${answerTag}`;
-      html += `<text x="0" y="${yOffset}" font-size="12" fill="#1f2937">${wrapTextSVG(clueText, colWidth - 35, 12)}</text>`;
-      yOffset += 18;
+      const wrapped = wrapTextToLinesSVG(clueText, 0, yOffset, colWidth - 30, fontSize, 1.35, '#1f2937', '400');
+      html += wrapped.svg;
+      yOffset += wrapped.height + 4;
     }
     html += `</g>`;
 
     // Down Column
     html += `<g id="down-clues" transform="translate(${colWidth + 10}, 0)">`;
     html += `<text x="0" y="0" font-size="18" font-weight="bold" fill="${primaryColor}" letter-spacing="1">DOWN</text>`;
-    html += `<line x1="0" y1="8" x2="${colWidth - 30}" y2="8" stroke="${primaryColor}" stroke-width="1.5" />`;
+    html += `<line x1="0" y1="8" x2="${colWidth - 25}" y2="8" stroke="${primaryColor}" stroke-width="1.5" />`;
 
     yOffset = 28;
     for (const w of downWords) {
-      if (startY + yOffset > pageHeight - 40) break;
+      if (startY + yOffset > pageHeight - 35) break;
       const answerTag = isSolution ? ` (${w.displayWord || w.word})` : '';
       const clueText = `${w.number}. ${w.clue}${answerTag}`;
-      html += `<text x="0" y="${yOffset}" font-size="12" fill="#1f2937">${wrapTextSVG(clueText, colWidth - 35, 12)}</text>`;
-      yOffset += 18;
+      const wrapped = wrapTextToLinesSVG(clueText, 0, yOffset, colWidth - 30, fontSize, 1.35, '#1f2937', '400');
+      html += wrapped.svg;
+      yOffset += wrapped.height + 4;
     }
     html += `</g>`;
 
@@ -203,38 +255,91 @@
     return html;
   }
 
-  function renderWordSearchList(placedWords, startY, pageWidth, pageHeight, margin, primaryColor, numCols) {
+  function renderFillInWordList(groupedByLength, startY, pageWidth, pageHeight, margin, primaryColor, numCols, fontSize = 12) {
+    if (!groupedByLength || Object.keys(groupedByLength).length === 0) return '';
+
+    let html = `<g id="fillin-words" transform="translate(${margin}, ${startY})">`;
+    html += `<text x="0" y="0" font-size="18" font-weight="bold" fill="${primaryColor}" letter-spacing="1">FILL IN WORDS</text>`;
+    html += `<line x1="0" y1="8" x2="${pageWidth - margin * 2}" y2="8" stroke="${primaryColor}" stroke-width="1.5" />`;
+
+    const cols = Math.max(1, Math.min(numCols || 3, 4));
+    const availableWidth = pageWidth - margin * 2;
+    const colWidth = availableWidth / cols;
+
+    const lengths = Object.keys(groupedByLength).map(Number).sort((a, b) => a - b);
+    const colYOffsets = new Array(cols).fill(30);
+    let col = 0;
+
+    for (const len of lengths) {
+      const words = groupedByLength[len];
+      if (!words || words.length === 0) continue;
+
+      const groupHeader = `${len} LETTERS`;
+      let currentY = colYOffsets[col];
+
+      if (startY + currentY > pageHeight - 40) {
+        col = (col + 1) % cols;
+        currentY = colYOffsets[col];
+      }
+
+      // Group Header
+      html += `<text x="${col * colWidth}" y="${currentY}" font-size="${fontSize + 2}" font-weight="bold" fill="${primaryColor}">${escapeXML(groupHeader)}</text>`;
+      currentY += fontSize + 8;
+
+      for (const word of words) {
+        if (startY + currentY > pageHeight - 35) {
+          col = (col + 1) % cols;
+          currentY = colYOffsets[col];
+        }
+
+        html += `<text x="${col * colWidth + 5}" y="${currentY}" font-size="${fontSize}" font-weight="600" fill="#334155">• ${escapeXML(word)}</text>`;
+        currentY += fontSize + 6;
+      }
+
+      currentY += 10;
+      colYOffsets[col] = currentY;
+      col = (col + 1) % cols;
+    }
+
+    html += `</g>`;
+    return html;
+  }
+
+  function renderWordSearchList(placedWords, startY, pageWidth, pageHeight, margin, primaryColor, numCols, fontSize = 12) {
     if (!placedWords || placedWords.length === 0) return '';
 
     let html = `<g id="wordsearch-list" transform="translate(${margin}, ${startY})">`;
     html += `<text x="0" y="0" font-size="18" font-weight="bold" fill="${primaryColor}" letter-spacing="1">FIND THE WORDS</text>`;
     html += `<line x1="0" y1="8" x2="${pageWidth - margin * 2}" y2="8" stroke="${primaryColor}" stroke-width="1.5" />`;
 
-    const cols = Math.max(1, Math.min(numCols || 3, 4));
-    const colWidth = (pageWidth - margin * 2) / cols;
+    const cols = Math.max(1, Math.min(numCols || 2, 4));
+    const availableWidth = pageWidth - margin * 2;
+    const colWidth = availableWidth / cols;
 
-    let row = 0;
+    // Track column y-offsets for accurate multi-line wrapping in columns
+    const colYOffsets = new Array(cols).fill(30);
+
     let col = 0;
-    let yOffset = 30;
 
     for (let i = 0; i < placedWords.length; i++) {
       const item = placedWords[i];
       const wordStr = item.displayWord || item.word;
       const hasClue = item.clue && item.clue !== item.word;
-      const displayStr = hasClue ? `${wordStr} - ${item.clue}` : wordStr;
+      const displayStr = hasClue ? `• ${wordStr} - ${item.clue}` : `• ${wordStr}`;
 
       const x = col * colWidth;
-      const y = yOffset + row * 20;
+      const currentY = colYOffsets[col];
 
-      if (startY + y > pageHeight - 40) break;
-
-      html += `<text x="${x}" y="${y}" font-size="12" font-weight="600" fill="#334155">• ${escapeXML(displayStr)}</text>`;
-
-      col++;
-      if (col >= cols) {
-        col = 0;
-        row++;
+      if (startY + currentY > pageHeight - 35) {
+        col = (col + 1) % cols;
+        continue;
       }
+
+      const wrapped = wrapTextToLinesSVG(displayStr, x, currentY, colWidth - 15, fontSize, 1.3, '#334155', '600');
+      html += wrapped.svg;
+      colYOffsets[col] += wrapped.height + 6;
+
+      col = (col + 1) % cols;
     }
 
     html += `</g>`;
@@ -243,5 +348,5 @@
 
   exports.renderWorksheetSVG = renderWorksheetSVG;
   exports.escapeXML = escapeXML;
-  exports.wrapTextSVG = wrapTextSVG;
+  exports.wrapTextToLinesSVG = wrapTextToLinesSVG;
 })(typeof module !== 'undefined' && module.exports ? module.exports : (window.Renderer = {}));
