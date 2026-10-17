@@ -1,0 +1,28 @@
+{
+  "name": "puzzle-craft",
+  "version": "1.0.0",
+  "description": "Professional Crossword and Word Search (Mots Mêlés) Worksheet Generator",
+  "main": "js/app.js",
+  "scripts": {
+    "start": "npx http-server . -p 8080",
+    "test": "node --test tests/parser.test.js tests/generators.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlexTheDevOnMicrobit/cross-word-generator.git"
+  },
+  "keywords": [
+    "crossword",
+    "wordsearch",
+    "mots-meles",
+    "puzzle-generator",
+    "worksheet",
+    "education"
+  ],
+  "author": "AlexTheDevOnMicrobit",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AlexTheDevOnMicrobit/cross-word-generator/issues"
+  },
+  "homepage": "https://github.com/AlexTheDevOnMicrobit/cross-word-generator#readme"
+}
